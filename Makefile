@@ -12,6 +12,12 @@ ARCHIVE_NAME=$(PROJECT_NAME)-$(VERSION).tar.gz
 BUILD_ROOT=./build
 ARCHIVE=$(BUILD_ROOT)/$(ARCHIVE_NAME)
 
+SHELLCHECK=$(shell command -v shellcheck)
+
+ifeq ($(SHELLCHECK),)
+include make/install_shellcheck.mk
+endif
+
 .env:
 	touch $@
 
@@ -25,8 +31,8 @@ $(ARCHIVE): MANIFEST.md5 $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
 
 build: $(ARCHIVE)
 
-shellcheck: $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
-	shellcheck $^
+shellcheck: $(SHELLCHECK) $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
+	$^
 
 gitstatus:
 	git status;

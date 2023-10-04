@@ -1,0 +1,23 @@
+name: note.sh test and packkage
+run-name: ${{ gitea.actor }} is packaging note.sh
+on: [pull-request, push]
+
+jobs:
+  buid-notesh:
+    runs-on: docker
+    container:
+      image: node:18
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Run shellcheck
+        run: |
+          make shellcheck
+      - name: Build note.sh
+        run: |
+          make build
+      - name: Publish note.sh artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: notesh.tar.gz
+          path: build/note.sh-*.tar.gz
