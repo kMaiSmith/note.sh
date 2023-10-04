@@ -28,10 +28,14 @@ build: $(ARCHIVE)
 shellcheck: $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
 	shellcheck $^
 
-publish: $(ARCHIVE) shellcheck
+gitstatus:
+	git status;
+	git diff-index --quiet HEAD --
+
+publish: $(ARCHIVE) shellcheck gitstatus
 	scp $< $(PUBLISH_SERVER):$(PUBLISH_PATH)
 
 clean:
 	rm -rf $(BUILD_ROOT)
 
-.PHONY: bundle build clean publish shellcheck
+.PHONY: bundle build clean publish shellcheck gitstatus
