@@ -42,6 +42,7 @@ notesh.config.load_actions_folders() {
 
     for folder in "${folders[@]}"; do
         [ -d "${folder}" ] || continue
+        # any file ending in *.action.sh is considered to define a legal action
         readarray -t actions < <(find "${folder}" -name "*.action.sh")
     
         # In order for note.sh to run an action, a matching script file must
@@ -61,11 +62,19 @@ notesh.config.load_user_config() {
         source "${NOTESH_ROOT}/.notesh/config.sh"
 }
 
+# The NOTE_ROOT serves the rest of the system as the starting point for
+#   managing notes for the current session
 NOTE_ROOT="$(notesh.config.note_root "${PWD}")"
+# The NOTESH_DATA_ROOT serves the rest of the system for note.sh system,
+#   configurtion, and cache files
 NOTESH_DATA_ROOT="$(notesh.config.data_root)"
+# The NOTESH_ACTIONS is the list of identified .action.sh to execute from.
+#   (see notesh.actions.sh@notesh.action.run() )
 NOTESH_ACTIONS=()
 notesh.config.load_actions_folders \
     "${NOTESH_ACTIONS_PATH-}:${NOTESH_ROOT}/actions"
+# Many actions are configurable by the user, loading the configurations in
+#   now makes them readily available to the actions when invoked
 notesh.config.load_user_config
 
 export NOTE_ROOT NOTESH_DATA_ROOT NOTESH_ACTIONS
