@@ -1,3 +1,5 @@
+include .env
+
 BINS=bin/note.sh
 LIBS=$(wildcard lib/notesh/notesh.*.sh)
 ACTIONS=$(wildcard lib/notesh/actions/*.action.sh)
@@ -9,6 +11,9 @@ ARCHIVE_NAME=$(PROJECT_NAME)-$(VERSION).tar.gz
 
 BUILD_ROOT=./build
 ARCHIVE=$(BUILD_ROOT)/$(ARCHIVE_NAME)
+
+.env:
+	touch $@
 
 MANIFEST.md5: $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
 	md5sum $^ > $@
@@ -23,4 +28,7 @@ build: $(ARCHIVE)
 clean:
 	rm -rf $(BUILD_ROOT)
 
-.PHONY: bundle build clean
+publish: $(ARCHIVE)
+	scp $^ $(PUBLISH_SERVER):$(PUBLISH_PATH)
+
+.PHONY: bundle build clean publish
