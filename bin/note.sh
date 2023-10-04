@@ -34,7 +34,7 @@ set -o nounset  # -u
 set -o pipefail
 # set -o errexit  # -e
 
-NOTESH_ROOT="$(cd "$(dirname "${0}")/../lib/notesh"; pwd)"
+NOTESH_ROOT="$(cd "$(dirname "${0}")/../lib/notesh" || exit 1; pwd)"
 export NOTESH_ROOT
 
 source "${NOTESH_ROOT}/notesh.configs.sh"

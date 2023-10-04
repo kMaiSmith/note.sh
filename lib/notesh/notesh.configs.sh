@@ -77,4 +77,5 @@ notesh.config.load_actions_folders \
 #   now makes them readily available to the actions when invoked
 notesh.config.load_user_config
 
-export NOTE_ROOT NOTESH_DATA_ROOT NOTESH_ACTIONS
+export NOTESH_ROOT NOTE_ROOT NOTESH_DATA_ROOT \
+    NOTESH_ACTIONS_PATH NOTESH_ACTIONS

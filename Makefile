@@ -25,10 +25,13 @@ $(ARCHIVE): MANIFEST.md5 $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
 
 build: $(ARCHIVE)
 
+shellcheck: $(BINS) $(LIBS) $(ACTIONS) $(CONFIGS)
+	shellcheck $^
+
+publish: $(ARCHIVE) shellcheck
+	scp $< $(PUBLISH_SERVER):$(PUBLISH_PATH)
+
 clean:
 	rm -rf $(BUILD_ROOT)
 
-publish: $(ARCHIVE)
-	scp $^ $(PUBLISH_SERVER):$(PUBLISH_PATH)
-
-.PHONY: bundle build clean publish
+.PHONY: bundle build clean publish shellcheck

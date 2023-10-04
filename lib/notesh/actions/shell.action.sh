@@ -18,7 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 shell/notesh.run() {
-    [[ "${PWD}/" == "${NOTE_ROOT}/"* ]] || cd "${NOTE_ROOT}"
+    [[ "${PWD}/" == "${NOTE_ROOT}/"* ]] || cd "${NOTE_ROOT}" || \
+        echo "Could not enter ${NOTE_ROOT}, sticking with ${PWD}"
 
     while read -r -a NOTECOMMAND -p "$(shell.prompt)"; do
         set -- "${NOTECOMMAND[@]}"
