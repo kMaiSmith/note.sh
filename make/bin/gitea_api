@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+#
+# gitea_api - Utilities for interacting with the Gitea API
+#
+# Copyright 2023 Kyle R Smith
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+BUILD_ROOT="${BUILD_ROOT:-./build}"
+
+GITEA_API_URL="https://git.kmaismith.com/api/v1"
+GITEA_REPO="${GITEA_REPO:-${GIT_REPO-}}"
+GITEA_RELEASE_FILE="${BUILD_ROOT}/gitea_release.json"
+GITEA_AUTHORIZATION_HEADER="Authorization: token "
+GITEA_AUTHORIZATION_HEADER+="${GITEA_TOKEN:-${TOKEN_GITEA-}}"
+
+usage() {
+    cat <<USAGE
+${0} <action> [args ...]
+
+    create_release <tag> <title> <body>:
+        Create a gitea release for the ${GITEA_REPO}
+    
+    create_release_attachment <artifact>:
+        Add an artifact onto a previously created release
+USAGE
+    exit 1
+}
+
+error() {
+    echo "ERROR: ${1}"
+    exit 1
+}
+
+show_release_attachments() {
+    jq -rcM '.assets[].name' "${GITEA_RELEASE_FILE}"
+}
+
+create_release_attachment() {
+    local release_id url attachment_name
+
+    attachment_name="$(basename "${1}")"
+    release_id="$(jq -rcM ".id" "${GITEA_RELEASE_FILE}")"
+
+    url="${GITEA_API_URL}/repos/${GITEA_REPO}/releases/${release_id}/assets"
+    url+="?name=${attachment_name}"
+
+    curl -f -F "attachment=@${1}" -X POST -H "accept: application/json" \
+        -H "${GITEA_AUTHORIZATION_HEADER}" "${url}" || \
+            error "Attach artifact to rlease failed"
+}
+
+create_release() {
+    rm -f "${GITEA_RELEASE_FILE}"
+
+    local payload url name body
+
+    name="$(changelog_utils title "${1}")"
+    body="$(changelog_utils body "${1}")"
+
+    payload="{"
+    payload+="\"tag_name\":\"${1}\","
+    payload+="\"name\":\"${name}\","
+    payload+="\"body\":\"${body}\","
+    payload+="\"draft\":true,"
+    payload+="\"pre_release\":false,"
+    payload+="\"target_commitish\":\"$(git rev-parse HEAD)\""
+    payload+="}"
+
+    url="${GITEA_API_URL}/repos/${GITEA_REPO}/releases"
+
+    set -x
+
+    curl -f -X POST -H "accept: application/json" \
+        -H "${GITEA_AUTHORIZATION_HEADER}" \
+        -H "Content-Type: application/json" --data-raw "${payload}" \
+        "${url}" > "${GITEA_RELEASE_FILE}" || \
+            error "Create release API call failed"
+}
+
+get_release() {
+    rm -f "${GITEA_RELEASE_FILE}"
+
+    local url
+
+    url="${GITEA_API_URL}/repos/${GITEA_REPO}/releases/tags/${1}"
+
+    curl -f -X GET -H "accept: application/json" \
+        -H "${GITEA_AUTHORIZATION_HEADER}" \
+        "${url}" > "${GITEA_RELEASE_FILE}" || \
+            error "Unable to get relase for tag ${1}"
+}
+
+if [ "${0}" = "${BASH_SOURCE[0]}" ]; then
+    [ -n "${1-}" ] || usage
+    [ -n "${GITEA_TOKEN:-${TOKEN_GITEA-}}" ] || \
+        error "GITEA_TOKEN must be set with your Gitea API token"
+    [ -n "${GITEA_REPO}" ] || \
+        error "GITEA_REPO must be specified"
+
+    case "${1}" in
+
+    get_release)
+        [ -n "${2}" ] || \
+            error "get_release <tag> takes 1 argument"
+        get_release "${2}"
+        ;;
+
+    create_release)
+        [ -n "${2-}" ]|| \
+            error "create_release <tag> takes 1 arguments"
+        create_release "${2}"
+        ;;
+
+    create_release_attachment)
+        [ -f "${2-}" ] || \
+            error "create_release_artifact <artifact> takes 1 file path"
+        [ -f "${GITEA_RELEASE_FILE-}" ] || \
+            error "a release must first be created with create_release"
+        create_release_attachment "${2}"
+        ;;
+
+    show_release_attachments)
+        [ -f "${GITEA_RELEASE_FILE-}" ] || \
+            error "a release must first be created with create_release"
+        show_release_attachments
+        ;;
+
+    esac
+fi

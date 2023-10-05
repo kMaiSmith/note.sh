@@ -1,0 +1,27 @@
+name: Relesae note.sh
+run-name: ${{ gitea.actor }} is relesing note.sh
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  release-notesh:
+    runs-on: docker
+    container:
+      image: node:18
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Run pre-release validation checks
+        run: make pr_check
+      - name: Build note.sh
+        run: make build
+      - name: Create draft Gitea release
+        env:
+          GITEA_TOKEN: ${{ secrets.TOKEN_GITEA }}
+        run: make release_gitea
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: make release_github

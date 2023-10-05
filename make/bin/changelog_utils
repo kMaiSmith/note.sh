@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# changelog_utils - Utilities for working with CHANGELOG.md files
+#
+# Copyright 2023 Kyle R Smith
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+CHANGELOG_FILE="${CHANGELOG_FILE:-CHANGELOG.md}"
+
+usage() {
+    cat <<USAGE
+${0} <action> [args ...]
+
+    body <verison>:
+        Print the body of the changelog for the version
+
+    title <verison>:
+        Print the title of the changelog for the version
+
+USAGE
+    exit 1
+}
+
+error() {
+    echo "ERROR: ${1}"
+    exit 1
+}
+
+changelog_title() {
+    sed -n "s/## ${1} - \(.*\)/\1/p" "${CHANGELOG_FILE}"
+
+}
+
+changelog_body() {
+    sed -n "/^## ${1}/,\$p" "${CHANGELOG_FILE}" | \
+        tail -n +2 | sed -e "/^## /,\$d"
+}
+
+if [ "${0}" = "${BASH_SOURCE[0]}" ]; then
+    [ -n "${1-}" ] || usage
+    [ -f "${CHANGELOG_FILE}" ]
+
+    case "${1}" in
+
+    title)
+    [ -n "${2}" ] || \
+        error "title <version> takes one argument"
+    changelog_title "${2}"
+    ;;
+
+    body)
+    [ -n "${2}" ] || \
+        error "body <version> takes one argument"
+    changelog_body "${2}"
+    ;;
+
+    esac
+fi

@@ -11,11 +11,13 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Run shellcheck
-        run: |
-          make shellcheck
+        run: make shellcheck
+      - name: Run VERSION file checks
+        run: make version_is_updated
+      - name: Run CHANGELOG.md checks
+        run: make changelog_is_updated
       - name: Build note.sh
-        run: |
-          make build
+        run: make build
       - name: Publish note.sh artifact
         uses: actions/upload-artifact@v3
         with:
